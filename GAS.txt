@@ -1,0 +1,111 @@
+const SHEET_ID = "17Y3yQ8FRca94TvqMNsSU2eySY7UTV4YObY57K822U6s";
+const SHEET_NAME = "ลงเวลาเข้า";
+const CASH_SHEET_NAME = "ลงเวลาเข้าเงินสด";
+const PARENT_FOLDER_ID = "1wj0KK43xiQgPDKm-wuuDH_kh08iDhqbz";
+const SUB_FOLDER_NAME = "Visitor_ID_Photos";
+
+function doPost(e) {
+  const params = e.parameter;
+  const action = params.action || "";
+
+  if (action === "entry") return handleEntry(params);
+  if (action === "cashEntry") return handleCashEntry(params);
+  if (action === "nameList") return getNameList();
+  if (action === "houseList") return getHouseList();
+
+  return ContentService.createTextOutput("❌ ไม่พบ action ที่ร้องขอ");
+}
+
+// ✅ ลงเวลาเข้าแบบปกติ
+function handleEntry(params) {
+  return processEntry(params, SHEET_NAME, false);
+}
+
+// ✅ ลงเวลาเข้าแบบ "รับเงินสด"
+function handleCashEntry(params) {
+  return processEntry(params, CASH_SHEET_NAME, true);
+}
+
+// 🧠 ฟังก์ชันกลางสำหรับการบันทึกข้อมูล
+function processEntry(params, sheetName, isCash) {
+  try {
+    Logger.log("🔵 เริ่ม processEntry");
+
+    const name = (params.fullname || "").trim();
+    const dept = params.department || "";
+    const note = params.note || "";
+    const filename = params.filename || "photo.jpg";
+    const fileData = params.file;
+
+    Logger.log("📥 พารามิเตอร์: " + JSON.stringify({ name, dept, filename }));
+
+    if (!name || !dept || !fileData) {
+      Logger.log("⛔ ข้อมูลไม่ครบ");
+      return ContentService.createTextOutput("🚫 กรุณาระบุข้อมูลให้ครบ");
+    }
+
+    const now = new Date();
+    const dateStr = Utilities.formatDate(now, "Asia/Bangkok", "yyyy-MM-dd");
+    const timeStr = Utilities.formatDate(now, "Asia/Bangkok", "HH:mm:ss");
+    const shift = (now.getHours() >= 6 && now.getHours() < 17) ? "D" : "N";
+
+    Logger.log("⏰ วันเวลา: " + dateStr + " " + timeStr + " shift=" + shift);
+
+    const blob = Utilities.newBlob(Utilities.base64Decode(fileData), MimeType.JPEG, filename);
+    Logger.log("🧱 สร้าง blob สำเร็จ");
+
+    const folder = getOrCreateSubFolder(PARENT_FOLDER_ID, SUB_FOLDER_NAME);
+    Logger.log("📁 ได้โฟลเดอร์: " + folder.getName());
+
+    const safeName = name.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, "_");
+    const fullFileName = `${safeName}_${isCash ? "CASH_" : ""}${dateStr.replace(/-/g, "")}_${timeStr.replace(/:/g, "")}.jpg`;
+    blob.setName(fullFileName);
+    Logger.log("📎 ตั้งชื่อ blob เป็น: " + fullFileName);
+
+    const file = folder.createFile(blob);
+    Logger.log("📤 อัปโหลดไฟล์สำเร็จ URL: " + file.getUrl());
+
+    const row = [name, dept, dateStr, timeStr, shift, file.getUrl(), note];
+    if (isCash) row.push("");
+    Logger.log("📄 ข้อมูลแถวที่จะเพิ่ม: " + JSON.stringify(row));
+
+    const sheet = getSheet(sheetName);
+    if (!sheet) throw new Error("ไม่พบชีต: " + sheetName);
+    Logger.log("📑 พบชีต: " + sheet.getName());
+
+    sheet.appendRow(["", ...row]);
+    Logger.log("✅ บันทึกลงชีตแล้ว");
+
+    return ContentService.createTextOutput(`✅ บันทึกสำเร็จ${isCash ? " (เงินสด)" : ""}`);
+  } catch (err) {
+    Logger.log("❌ ERROR: " + err.message);
+    return ContentService.createTextOutput("❌ ERROR: " + err.message);
+  }
+}
+
+// 📋 รายชื่อพนักงาน
+function getNameList() {
+  const sheet = getSheet("รายชื่อพนักงาน");
+  const values = sheet.getRange("A2:A").getValues();
+  return ContentService.createTextOutput(JSON.stringify(values.flat().filter(v => v)))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 📋 รายชื่อหน่วยงาน
+function getHouseList() {
+  const sheet = getSheet("รายชื่อหน่วยงาน");
+  const values = sheet.getRange("A2:A").getValues();
+  return ContentService.createTextOutput(JSON.stringify(values.flat().filter(v => v)))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 📄 Utility
+function getSheet(name) {
+  return SpreadsheetApp.openById(SHEET_ID).getSheetByName(name);
+}
+
+function getOrCreateSubFolder(parentFolderId, subFolderName) {
+  const parent = DriveApp.getFolderById(parentFolderId);
+  const folders = parent.getFoldersByName(subFolderName);
+  return folders.hasNext() ? folders.next() : parent.createFolder(subFolderName);
+}
