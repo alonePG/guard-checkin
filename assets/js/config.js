@@ -1,2 +1,2 @@
 // 🔧 กำหนด URL ของ Google Apps Script Web App
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbziSF9wFXg8hlEYy4icPVhImp8E3mnEG_igzLb15QE6FW8ry7e2l2WZ0Zj53CwJKLsX/exec";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzcCUTob7Ws_7VClYrPFQtLvPN8XZzcrhwATPDRA-qtTiPTh0TcA9S1hKhZF9vHC3f6/exec";
