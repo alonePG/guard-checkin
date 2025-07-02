@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let nameList = [];
 
-  // 🔄 โหลดรายชื่อพนักงาน
   fetch(SHEET_API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -21,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(data => nameList = data || [])
     .catch(err => console.warn("❌ โหลดรายชื่อพนักงานล้มเหลว:", err));
 
-  // 🔄 โหลดหน่วยงาน
   fetch(SHEET_API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -42,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch(err => console.warn("❌ โหลดหน่วยงานล้มเหลว:", err));
 
-  // 🎥 เปิดกล้อง
   openCameraBtn.addEventListener("click", () => photoInput.click());
 
   photoInput.addEventListener("change", () => {
@@ -51,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
       : "";
   });
 
-  // 🔍 ระบบ autocomplete
   fullnameInput.addEventListener("input", () => {
     const query = fullnameInput.value.trim().toLowerCase();
     autocompleteList.innerHTML = "";
@@ -80,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 📤 ส่งข้อมูล
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -108,11 +103,20 @@ document.addEventListener("DOMContentLoaded", () => {
         file: base64Image
       });
 
-      fetch(SHEET_API_URL, {
+      console.log("📤 ส่งข้อมูล:", Object.fromEntries(data.entries()));
+
+      const response = await fetch(SHEET_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: data
       });
+
+      const resultText = await response.text();
+      console.log("📩 ตอบกลับจาก GAS:", resultText);
+
+      if (!resultText.startsWith("✅")) {
+        throw new Error(resultText);
+      }
 
       if (successSound) successSound.play();
 
@@ -136,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 🧠 ฟังก์ชันบีบอัดภาพ + ใส่ลายน้ำ
   async function compressAndWatermark(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

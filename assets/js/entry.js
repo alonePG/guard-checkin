@@ -103,12 +103,20 @@ document.addEventListener("DOMContentLoaded", () => {
         file: base64Image
       });
 
-      // 🔥 Fire-and-forget (ไม่รอผลลัพธ์จาก GAS)
-      fetch(SHEET_API_URL, {
+      console.log("📤 ส่งข้อมูล:", Object.fromEntries(data.entries()));
+
+      const response = await fetch(SHEET_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: data
       });
+
+      const resultText = await response.text();
+      console.log("📩 ตอบกลับจาก GAS:", resultText);
+
+      if (!resultText.startsWith("✅")) {
+        throw new Error(resultText);
+      }
 
       if (successSound) successSound.play();
 
