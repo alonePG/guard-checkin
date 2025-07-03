@@ -39,6 +39,38 @@
     .autocomplete-item:hover {
       background: #eee;
     }
+
+    /* ✅ Loading Overlay CSS เพิ่มเข้ามาใหม่ */
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.8);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .spinner {
+      border: 6px solid #ccc;
+      border-top: 6px solid #333;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -78,6 +110,12 @@
     </form>
 
     <audio id="successSound" src="assets/sound/success.mp3" preload="auto"></audio>
+  </div>
+
+  <!-- ✅ Loading Overlay HTML -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>กำลังบันทึกข้อมูล...</p>
   </div>
 
   <!-- JavaScript -->
