@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fileNameText = document.getElementById("fileNameText");
   const successSound = document.getElementById("successSound");
   const autocompleteList = document.getElementById("autocompleteList");
+  const loadingOverlay = document.getElementById("loadingOverlay"); // ✅ เพิ่มตัวแปร
 
   let nameList = [];
 
@@ -95,6 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    loadingOverlay.style.display = "flex"; // ✅ แสดง loading
+
     try {
       const base64Image = await compressAndWatermark(file);
       const data = new URLSearchParams({
@@ -136,6 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
         title: "❌ เกิดข้อผิดพลาด",
         text: err.message
       });
+    } finally {
+      loadingOverlay.style.display = "none"; // ✅ ซ่อน loading ไม่ว่า success หรือ error
     }
   });
 
